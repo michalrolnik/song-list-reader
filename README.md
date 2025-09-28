@@ -33,11 +33,13 @@ git clone https://github.com/michalrolnik/song-list-reader.git
 cd song-list-reader
 
 ### 2. Start the database (Docker)
+```bash
 docker compose up -d db
 Database runs on localhost:5432 with user/password defined in .env.
 
 
 ### 3. Run the backend
+```bash
 cd backend/api
 npm install
 npm run start:dev
@@ -47,6 +49,7 @@ Backend will be available at http://localhost:3000
 .
 
 ### 4. Run the frontend
+```bash
 cd frontend
 npm install
 npm start
@@ -55,18 +58,20 @@ npm start
 Frontend will be available at http://localhost:3000
  (default CRA port).
 
-##🔧 Production Build
-###Backend
+🔧 Production Build
+Backend
+```bash
 cd backend/api
 npm run build
 npm run start
 
-###Frontend
+Frontend
+```bash
 cd frontend
 npm run build
 npx serve -s build
 
-## 🛠 Tech Stack
+ 🛠 Tech Stack
 
 NestJS (TypeScript) – backend framework
 
