@@ -58,8 +58,8 @@ npm install
 npm start
 ```
 
-Frontend will be available at http://localhost:3000
- (default CRA port).
+Frontend will be available at http://localhost:3001
+ (default CRA port is 3000 but our backend is on 3000 , so I edit forntend/env to be on 3001).
 
 ## 🔧 Production Build
 ### Backend
