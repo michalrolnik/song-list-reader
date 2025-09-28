@@ -36,6 +36,8 @@ cd song-list-reader
 ```bash
 docker compose up -d db
 Database runs on localhost:5432 with user/password defined in .env.
+```
+
 
 
 ### 3. Run the backend
