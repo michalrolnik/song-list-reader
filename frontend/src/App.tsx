@@ -44,35 +44,41 @@ export default function App() {
     : songs;
 
   return (
-    <div style={{ padding: 16 }}>
-      <h1>Song List</h1>
+    <main className='page'>
+      <header className='page-header'>
+        <h1>Song List <span>🎵</span></h1>
 
-      {/* אופציונלי: שדה חיפוש */}
-      {/* <input
-        value={query}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-        placeholder="חפש להקה/שיר..."
-        style={{ marginBottom: 12 }}
+        {/* אופציונלי: שדה חיפוש */}
+        {/* <input
+          value={query}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+          placeholder="חפש להקה/שיר..."
+          style={{ marginBottom: 12 }}
       /> */}
+      </header>
+      <section className="card">
+        <div className="table-wrap">
+          <table className='songs'>
+            <thead>
+              <tr>
+                <th className="col-id">#</th>
+                <th>Band</th>
+                <th>Title</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((s, i) => (
+                <tr key={s.id ?? i}>
+                  <td className="col-id">{i + 1}</td>
+                  <td className="cap">{s.band}</td>
+                  <td className="cap">{s.title}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        </section>
+    </main>
+);
+};
 
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Band</th>
-            <th>Title</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((s, i) => (
-            <tr key={s.id ?? i}>
-              <td>{i + 1}</td>
-              <td>{s.band}</td>
-              <td>{s.title}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
