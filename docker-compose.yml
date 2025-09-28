@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    platform: "linux/amd64"   # ברוב המחשבים עם Intel/AMD
+    container_name: songlist_db
+    environment:
+      POSTGRES_USER: songuser
+      POSTGRES_PASSWORD: songpass
+      POSTGRES_DB: songdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+volumes:
+  dbdata:
