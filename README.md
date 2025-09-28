@@ -61,7 +61,7 @@ npm start
 Frontend will be available at http://localhost:3000
  (default CRA port).
 
-##🔧 Production Build
+## 🔧 Production Build
 ### Backend
 ```bash
 cd backend/api
@@ -76,7 +76,7 @@ npm run build
 npx serve -s build
 ```
 
- ##🛠 Tech Stack
+ ## 🛠 Tech Stack
 
 NestJS (TypeScript) – backend framework
 
@@ -91,5 +91,5 @@ pg – PostgreSQL driver for Node.js
 📜 License
 
 This project is for learning/demo purposes only. Not licensed for production use.
-yaml
-Copy code
+
+
