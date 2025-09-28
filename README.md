@@ -1,70 +1,85 @@
-# Getting Started with Create React App
+# 🎶 Song List Reader
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack web application that reads a CSV file of songs, stores them in a PostgreSQL database, and displays them in a simple React table, ordered by band name.
 
-## Available Scripts
+## ✨ Features
+- **Backend:** [NestJS](https://nestjs.com/) with TypeScript  
+- **Frontend:** React (Create React App) with TypeScript  
+- **Database:** PostgreSQL (via Docker)  
+- **Integration:** REST API (`/songs`) to fetch song data  
+- **Dev & Prod modes** supported  
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🗂 Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+song-list-reader/
+├── backend/
+│ └── api/ # NestJS backend
+│ └── src/ # Controllers, services, modules
+├── frontend/ # React frontend (CRA)
+│ └── src/
+├── data/ # CSV file with song list
+└── docker-compose.yml
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚀 Getting Started
 
-### `npm run build`
+### 1. Clone the repository
+```bash
+git clone https://github.com/michalrolnik/song-list-reader.git
+cd song-list-reader
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. Start the database (Docker)
+docker compose up -d db
+Database runs on localhost:5432 with user/password defined in .env.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 3. Run the backend
+cd backend/api
+npm install
+npm run start:dev
 
-### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Backend will be available at http://localhost:3000
+.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 4. Run the frontend
+cd frontend
+npm install
+npm start
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Frontend will be available at http://localhost:3000
+ (default CRA port).
 
-## Learn More
+##🔧 Production Build
+###Backend
+cd backend/api
+npm run build
+npm run start
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+###Frontend
+cd frontend
+npm run build
+npx serve -s build
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🛠 Tech Stack
 
-### Code Splitting
+NestJS (TypeScript) – backend framework
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+React (CRA) (TypeScript) – frontend
 
-### Analyzing the Bundle Size
+PostgreSQL – database
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Docker Compose – containerized database
 
-### Making a Progressive Web App
+pg – PostgreSQL driver for Node.js
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+📜 License
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is for learning/demo purposes only. Not licensed for production use.
+yaml
+Copy code
