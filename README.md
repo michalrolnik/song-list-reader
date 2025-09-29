@@ -88,8 +88,5 @@ Docker Compose – containerized database
 
 pg – PostgreSQL driver for Node.js
 
-📜 License
-
-This project is for learning/demo purposes only. Not licensed for production use.
 
 
