@@ -112,7 +112,7 @@ table.songs{
   color: var(--muted);
 }
 
-.cap{ text-transform: capitalize; }
+.cap{ text-transform: none; }
 
 @media (max-width: 520px){
   .page{ margin-top: 20px; }
