@@ -1,4 +1,13 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  BadRequestException,
+  InternalServerErrorException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+
+
 import { Pool } from 'pg';
 import * as fs from 'fs';
 import { parse } from 'csv-parse';
@@ -12,83 +21,159 @@ export class SongsService {
 
   // להצגת הטבלה (כמו שהיה)
   async findAll() {
+    try{
     const q = await this.pool.query(
-      'SELECT id, title, band FROM songs ORDER BY LOWER(band), LOWER(title)'
-    );
-    return q.rows;
+      'SELECT id, title, band FROM songs ORDER BY LOWER(band), LOWER(title)'); 
+      return q.rows;
+    }
+      catch(err: any){  if (err?.code === '42P01') { // table not found
+        throw new ServiceUnavailableException('Songs table is missing');
+      }
+      throw new InternalServerErrorException('Failed to fetch songs');
+    }
   }
+
+   
+  
 
   // בדיקת בריאות (כמו שהיה)
   async healthDb() {
-    const q = await this.pool.query('SELECT 1 AS ok');
-    return { ok: q.rows[0].ok };
+    try {
+      const q = await this.pool.query('SELECT 1 AS ok');
+      return { ok: q.rows[0].ok };
+    } catch {
+      // לבריאות לא חושפים פרטים
+      throw new ServiceUnavailableException('DB not reachable');
+    }
   }
 
-  // ---------- חדש: טעינת CSV -> המרה ל-lowercase -> שמירה ל-DB ----------
+  
   private normalize(s: string) {
     return (s ?? '').toString().trim().toLowerCase();
   }
 
-  /**
-   * קורא את data/song_list.csv, ממיר לאותיות קטנות, ומכניס ל-DB.
-   * אפשר לקרוא בלי פרמטרים: importFromCsv()
-   */
-  async importFromCsv(csvPath = 'data/song_list.csv') {
-    this.logger.log(`Importing songs from ${csvPath} ...`);
-  // אם הנתיב שקיבלנו קיים – נשתמש בו (זה טוב ל-Docker: data/song_list.csv בתוך הקונטיינר)
+  
+   //* DBקורא את קובץ השירים, ממיר לאותיות קטנות ומכניס ל
+async importFromCsv(csvPath = 'data/song_list.csv',manageTx = true) {
+  this.logger.log(`Importing songs from ${csvPath} ...`);
+
+  // אם הנתיב שקיבלנו קיים – נשתמש בו (טוב ל-Docker: data/song_list.csv בתוך הקונטיינר)
   // אם לא – ננסה את הנתיב היחסי מה-WS המקומי: ../../data/song_list.csv
   const fallback = path.resolve(process.cwd(), '..', '..', 'data', 'song_list.csv');
   const resolvedPath = fs.existsSync(csvPath) ? csvPath : fallback;
   this.logger.log(`Using CSV path: ${resolvedPath}`);
-    const stream = fs.createReadStream(resolvedPath);
+
+  let stream: fs.ReadStream | null=null;
+
+
+  try {
+      
+
+    stream = fs.createReadStream(resolvedPath);
     const parser = stream.pipe(
-          parse({
-        // CSV שלך מופרד בנקודה־פסיק
+      parse({
+        // ה-CSV מופרד בנקודה-פסיק
         delimiter: ';',
-        // חשוב! יש קבצים עם BOM בתחילת השורה הראשונה
+        // לטיפול בקבצים עם BOM בתחילת הקובץ
         bom: true,
-        // נרמול שמות הכותרות: "Song Name" -> "song_name"
+        // נרמול שמות כותרות: "Song Name" -> "song_name"
         columns: (header: string[]) =>
           header.map((h) => h.trim().toLowerCase().replace(/\s+/g, '_')),
         trim: true,
         skip_empty_lines: true,
       })
+      
     );
+    if (manageTx) {
+          await this.pool.query('BEGIN');
+        }
 
-    await this.pool.query('BEGIN');
-    try {
-      let inserted = 0;   
-      for await (const row of parser) {
-        const band = this.normalize(row.band);
-        const title = this.normalize(row.song_name ?? row.title);
+    let inserted = 0;
 
-        // דילוג על שורות ריקות/חסרות
-        if (!title || !band) continue;
+    // עוטפים את הצריכה של ה-parser בהבטחה שתיפול גם על error של stream/parser
+    await new Promise<void>((resolve, reject) => {
+      (async () => {
+        try {
+          for await (const row of parser) {
+            const band = this.normalize(row.band);
+            const title = this.normalize(row.song_name ?? row.title);
 
-        await this.pool.query(
-          `INSERT INTO songs (band, title)
-           VALUES ($1, $2)
-           ON CONFLICT (band, title) DO NOTHING;`,
-          [band, title],
-        );
-        inserted++; 
+            // דילוג על שורות ריקות/חסרות
+            if (!title || !band) continue;
+
+            await this.pool.query(
+              `INSERT INTO songs (band, title)
+               VALUES ($1, $2)
+               ON CONFLICT (band, title) DO NOTHING;`,
+              [band, title],
+            );
+            inserted++;
+          }
+          resolve();
+        } catch (loopErr) {
+          reject(loopErr);
+        }
+      })();
+
+      // מאזינים לשגיאות אסינכרוניות של הקריאה/פענוח
+      if (stream) {
+        stream.on('error', reject);
       }
-      await this.pool.query('COMMIT');
-      this.logger.log(`Import completed. Inserted rows: ${inserted}`);
-      return { ok: true };
-    } catch (e) {
-      await this.pool.query('ROLLBACK');
-      this.logger.error('Import failed', e);
-      throw e;
+      parser.on('error', reject);
+    });
+
+    if (manageTx) {
+          await this.pool.query('COMMIT');
+        } 
+    this.logger.log(`Import completed. Inserted rows: ${inserted}`);
+    return { ok: true, inserted };
+  } catch (e: any) {
+    // קודם מגלגלים אחורה את הטרנזקציה (גם אם זה עצמו ייכשל – לא מפילים את התשובה)
+    if (manageTx) {
+          try { await this.pool.query('ROLLBACK'); } catch {}
+        }
+    // מיפוי שגיאות קריאות ללקוח
+    if (e?.code === 'ENOENT') {
+      throw new BadRequestException('CSV file not found');
     }
+    if (e?.code === '22P02') {
+      throw new BadRequestException('Invalid CSV data');
+    }
+
+    this.logger.error('Import failed', e);
+    throw new InternalServerErrorException('Failed to import CSV');
   }
-  // מרוקן את הטבלה ומייבא מחדש מה-CSV (הייבוא כבר עושה lowercase)
+   finally {
+  try {
+    stream?.destroy(); // אם נפתח stream, נסגור אותו
+  } catch {}
+}
+
+}
+
+
 async resetAndReimport(csvPath = 'data/song_list.csv') {
-  // מרוקנים וגם מאפסים את המונה של ה-id
-  await this.pool.query('TRUNCATE TABLE songs RESTART IDENTITY;');
 
-  // מייבאים מחדש (הפונקציה הזאת כבר עושה toLowerCase+trim)
-  return this.importFromCsv(csvPath);
+  try {
+    //כל הפקודות שכתובות בין השורה הזאת לזו של COMMIT יבוצעו זמנית
+    // אם משהו מבין ה AWAITS לא יקרה אז כל הבלוק הזה לא יקרה
+    //דואג לאטומיות
+    await this.pool.query('BEGIN');
+    //מוחק את כל השורות בDB
+    await this.pool.query('TRUNCATE TABLE songs RESTART IDENTITY;');
+
+    // מייבאים מחדש (הפונקציה הזאת כבר עושה toLowerCase+trim)
+    await this.importFromCsv(csvPath, false); 
+    await this.pool.query('COMMIT');
+    return { ok: true };
+  } catch (e) {
+    try { await this.pool.query('ROLLBACK'); } catch {}
+    throw new InternalServerErrorException('Failed to reset and reimport');
+  }
 }
 
+
+ 
+  
 }
+
