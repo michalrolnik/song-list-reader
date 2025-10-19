@@ -13,14 +13,52 @@ A full-stack web application that reads a CSV file of songs, stores them in a Po
 
 ## 🗂 Project Structure
 
+```text
 song-list-reader/
 ├── backend/
-│ └── api/ # NestJS backend
-│ └── src/ # Controllers, services, modules
-├── frontend/ # React frontend (CRA)
-│ └── src/
-├── data/ # CSV file with song list
-└── docker-compose.yml
+│   └── api/
+│       ├── src/
+│       │   ├── main.ts
+│       │   ├── app.module.ts
+│       │   ├── app.controller.ts
+│       │   ├── app.service.ts
+│       │   ├── db/
+│       │   │   ├── db.module.ts
+│       │   │   └── pg.provider.ts
+│       │   └── songs/
+│       │       ├── songs.controller.ts
+│       │       └── songs.service.ts
+│       ├── package.json
+│       └── .env.example
+├── frontend/
+│   ├── index.html
+│   ├── vite.config.ts
+│   ├── package.json
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── api/
+│       │   ├── client.ts          # generic HTTP client (uses VITE_API_URL)
+│       │   └── songs.ts           # /songs API wrapper
+│       ├── hooks/
+│       │   └── useSongs.tsx       # data-fetching hook
+│       ├── components/
+│       │   ├── Header.tsx
+│       │   ├── SongsTable.tsx
+│       │   ├── Loader.tsx
+│       │   └── ErrorState.tsx
+│       ├── pages/
+│       │   └── SongsPage.tsx
+│       ├── types/
+│       │   └── song.ts
+│       └── utiles/
+│           └── format.ts
+├── data/
+│   └── song_list.csv
+├── docker-compose.yml
+├── README.md
+└── .gitignore
+
 
 
 ---
