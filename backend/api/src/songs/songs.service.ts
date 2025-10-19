@@ -68,7 +68,6 @@ async importFromCsv(csvPath = 'data/song_list.csv',manageTx = true) {
 
   try {
       
-
     stream = fs.createReadStream(resolvedPath);
     const parser = stream.pipe(
       parse({
