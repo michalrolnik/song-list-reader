@@ -31,12 +31,14 @@ song-list-reader/
 │       ├── package.json
 │       └── .env.example
 ├── frontend/
-│   ├── index.html
-│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   ├── package-lock.json
 │   ├── package.json
 │   └── src/
-│       ├── main.tsx
+│       ├── index.tsx
 │       ├── App.tsx
+│       ├── index.css
+│       ├── App.css
 │       ├── api/
 │       │   ├── client.ts          # generic HTTP client (uses VITE_API_URL)
 │       │   └── songs.ts           # /songs API wrapper
