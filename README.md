@@ -28,6 +28,9 @@ song-list-reader/
 │       │   └── songs/
 │       │       ├── songs.controller.ts
 │       │       └── songs.service.ts
+│       │       └── songs.module.ts
+│       │       └── songs.entity.ts
+│       │       └── cursor.ts
 │       ├── package.json
 │       └── .env.example
 ├── frontend/
@@ -44,6 +47,7 @@ song-list-reader/
 │       │   └── songs.ts           # /songs API wrapper
 │       ├── hooks/
 │       │   └── useSongs.tsx       # data-fetching hook
+│       │   └── useSongsCursor.tsx       
 │       ├── components/
 │       │   ├── Header.tsx
 │       │   ├── SongsTable.tsx
