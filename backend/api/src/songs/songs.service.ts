@@ -6,26 +6,65 @@ import {
   InternalServerErrorException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { SongEntity } from './song.entity';
 
 
 import { Pool } from 'pg';
 import * as fs from 'fs';
 import { parse } from 'csv-parse';
 import * as path from 'path';
-
+import { encodeCursor,decodeCursor } from './cursor';
 @Injectable()
 export class SongsService {
   private readonly logger = new Logger(SongsService.name);
 
   constructor(@Inject('PG_POOL') private readonly pool: Pool) {}
 
+
+  // Cursor / Keyset - מצביע על השיר האחרון שמוצג ללקוח כדי לדעת מאיזה שירה להמישל לטעון  מהדאטה בייס
+  async listByCursor(limit = 50, cursor?: string) {
+    const safe = Math.min(Math.max(limit, 1), 200);
+    const c = decodeCursor(cursor);
+    const params: any[] = [];
+    let where = '';
+
+    if (c) {
+      params.push(c.band, c.title, c.id);
+      where = 'WHERE (band, title, id) > ($1, $2, $3)';
+    }
+
+    // LIMIT+1 כדי לדעת אם יש עוד
+    const res = await this.pool.query(
+      `
+      SELECT id, band, title
+      FROM songs
+      ${where}
+      ORDER BY band, title, id
+      LIMIT ${safe + 1}
+      `,
+      params,
+    );
+
+    const rows = res.rows;
+    const hasMore = rows.length > safe;
+    const items = hasMore ? rows.slice(0, safe) : rows;
+    const last = items[items.length - 1] || null;
+
+    return {
+      items,
+      nextCursor: last ? encodeCursor({ band: last.band, title: last.title, id: last.id }) : null,
+      hasMore,
+      limit: safe,
+    };
+  }
+
+
   // להצגת הטבלה (כמו שהיה)
-  async findAll() {
+  async findAll(): Promise<SongEntity[]> {
     try{
     const q = await this.pool.query(
-      'SELECT id, title, band FROM songs ORDER BY LOWER(band), LOWER(title)'); 
-      return q.rows;
-    }
+      'SELECT id, title, band FROM songs ORDER BY band, title, id'); 
+        return q.rows    }
       catch(err: any){  if (err?.code === '42P01') { // table not found
         throw new ServiceUnavailableException('Songs table is missing');
       }
@@ -57,16 +96,17 @@ export class SongsService {
 async importFromCsv(csvPath = 'data/song_list.csv',manageTx = true) {
   this.logger.log(`Importing songs from ${csvPath} ...`);
 
-  // אם הנתיב שקיבלנו קיים – נשתמש בו (טוב ל-Docker: data/song_list.csv בתוך הקונטיינר)
+  
+  let stream: fs.ReadStream | null=null;
+
+
+  try {
+    // אם הנתיב שקיבלנו קיים – נשתמש בו (טוב ל-Docker: data/song_list.csv בתוך הקונטיינר)
   // אם לא – ננסה את הנתיב היחסי מה-WS המקומי: ../../data/song_list.csv
   const fallback = path.resolve(process.cwd(), '..', '..', 'data', 'song_list.csv');
   const resolvedPath = fs.existsSync(csvPath) ? csvPath : fallback;
   this.logger.log(`Using CSV path: ${resolvedPath}`);
 
-  let stream: fs.ReadStream | null=null;
-
-
-  try {
       
     stream = fs.createReadStream(resolvedPath);
     const parser = stream.pipe(

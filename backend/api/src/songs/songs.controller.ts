@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode } from '@nestjs/common';
+import { Controller, Get, HttpCode,Query } from '@nestjs/common';
 import { SongsService } from './songs.service';
 
 @Controller()
@@ -13,6 +13,15 @@ export class SongsController {
   @Get('songs')
   songs() {
     return this.songsService.findAll();
+  }
+
+  @Get('songs/cursor')
+  async listCursor(
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string
+  ) {
+    const l = Math.min(Math.max(Number(limit) || 50, 1), 200);
+    return this.songsService.listByCursor(l, cursor || undefined);
   }
 
   // חדש: ייבוא ה־CSV -> lowercase -> DB
