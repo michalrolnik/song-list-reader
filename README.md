@@ -57,7 +57,7 @@ song-list-reader/
 │       │   └── SongsPage.tsx
 │       ├── types/
 │       │   └── song.ts
-│       └── utiles/
+│       └── utils/
 │           └── format.ts
 ├── data/
 │   └── song_list.csv
